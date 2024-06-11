@@ -1,0 +1,33 @@
+{
+  "name": "bit-torrent-client",
+  "version": "18.16.0",
+  "description": "Writing bit torrent client",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "npx nodemon",
+    "start": "npm run build && node dist/index.js",
+    "test": "jest",
+    "test:dev": "jest --watchAll"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run test && npm run prettier-format && npm run lint"
+    }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/bencode": "^2.0.4",
+    "@types/node": "^20.13.0",
+    "nodemon": "^3.1.2",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.15.2",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "bencode": "^4.0.0"
+  }
+}
