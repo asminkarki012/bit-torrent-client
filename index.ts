@@ -1,18 +1,14 @@
 // import { parse } from "url";
 // import { getPeers } from "./tracker";
-import { open } from "./torrent-parser";
-
+import * as torrentParser from "./src/torrent-parser";
 
 // const filePath = './src/leaves.torrent';
 // const torrent = ((fs.readFileSync(filePath)));
-const torrent = open('./src/leaves.torrent');
+// to run terminal for this nodex index.ts /filepath to torrent file
+const torrent = torrentParser.open(process.argv[2]);
 console.log(torrent);
 
 // getPeers(torrent, (peers: any) => {
 //   console.log("list of peers:", peers);
 // })
-
-
-//
-// console.log("decode bencode",decoded);
 

@@ -8,8 +8,8 @@ import crypto from "crypto"
 import * as util from "./util";
 
 
+const socket = dgram.createSocket('udp4');
 export const getPeers = (torrent: any, callback: any) => {
-  const socket = dgram.createSocket('udp4');
   const url = torrent.announce;
   udpSend(socket, buildConnReq(), url);
 
@@ -24,7 +24,6 @@ export const getPeers = (torrent: any, callback: any) => {
 const udpSend = (socket: dgram.Socket, message: Buffer | string, rawUrl: string, callback: () => void = () => { }) => {
   const url = new URL(rawUrl);
 
-
 }
 
 const buildConnReq = (): Buffer => {
@@ -37,17 +36,19 @@ const buildConnReq = (): Buffer => {
   buf.writeUInt32BE(0x27101980, 4);
 
   //action 
-  buf.writeUInt32BE(0, 8)
+  buf.writeUInt32BE(0, 8);
 
   //transaction id
-  crypto.randomBytes(4).copy(buf, 12);
+  crypto.randomBytes(4).copy(buf, 12)
 
   return buf;
-
 }
 
-const respType = (response: Buffer | string): string => {
-  return "";
+const respType = (response: Buffer): string => {
+  const action = response.readUInt32BE(0)
+  if (action === 0) return 'connect'
+  if (action === 1) return 'annouce'
+  return ''
 }
 
 const parseConnResp = (resp: Buffer) => {
@@ -95,24 +96,24 @@ const parseAnnounceResp = (response: any) => {
 
 
   return {
-  action:response.readUInt32BE(0),
-  transactionId:response.readUInt32BE(4),
-  leechers:response.readUInt32BE(8),
-  seeders:response.readUInt32BE(12),
-    peers:group(response.slice(20),6).map(addr=>{
-      return{
-        ip:addr.slice(0,4).join('.'),
-        port:addr.readUInt32BE(4)
+    action: response.readUInt32BE(0),
+    transactionId: response.readUInt32BE(4),
+    leechers: response.readUInt32BE(8),
+    seeders: response.readUInt32BE(12),
+    peers: group(response.slice(20), 6).map(addr => {
+      return {
+        ip: addr.slice(0, 4).join('.'),
+        port: addr.readUInt32BE(4)
       }
     })
   }
 }
 
-  function group (iteratable:Buffer[],groupSize:number):Buffer[]{
-    const groups =[]
-    for (let index = 0; index < iteratable.length; index+=groupSize ){
-      groups.push(...iteratable.slice(index,index+groupSize))
-      
-    }
-  return groups;
+function group(iteratable: Buffer[], groupSize: number): Buffer[] {
+  const groups = []
+  for (let index = 0; index < iteratable.length; index += groupSize) {
+    groups.push(...iteratable.slice(index, index + groupSize))
+
   }
+  return groups;
+}

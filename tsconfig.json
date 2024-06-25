@@ -10,11 +10,11 @@
     "esModuleInterop": true,
     "types": ["node"],
     "skipLibCheck": true,
-    "moduleResolution": "node",
+    "moduleResolution": "node"
     // "allowImportingTsExtensions": true,
     // "noEmit": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "index.ts"],
   "exclude": ["src/**/*.spec.ts"],
 "ts-node": {
     "transpileOnly": true,
