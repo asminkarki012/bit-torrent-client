@@ -2,9 +2,28 @@ import { Buffer } from 'buffer';
 import * as torrentParser from './torrent-parser'
 import * as util from './util';
 
-export const buildHandshake = (torrent: any) => {
+/*
+for reference : https://wiki.theory.org/BitTorrentSpecification 
+
+The handshake is the initial step in establishing a connection between two peers in a BitTorrent network.
+
+It serves to confirm the identity of the peers and to ensure they are part of the same torrent swarm.
+
+handshake is 68 bytes long
+handshake: <pstrlen><pstr><reserved><info_hash><peer_id>
+
+Example of handshake message:
+Pstrlen: 19 (since "BitTorrent protocol" is 19 characters long)
+Pstr: "BitTorrent protocol"
+Reserved: \x00\x00\x00\x00\x00\x00\x00\x00
+Info Hash: \x12\x34\x56... (20-byte SHA-1 hash)
+Peer ID: -AZ2060-283292789234 (example 20-byte identifier)
+
+*/
+export const buildHandshake = (torrent: unknown) => {
+  //68 bytes
   const buf = Buffer.alloc(68);
-  //pstrlen
+  //pstrlen 
   buf.writeInt8(19, 0)
   //pstr
   buf.write('BitTorrent protocol', 1)
@@ -19,11 +38,25 @@ export const buildHandshake = (torrent: any) => {
   return buf;
 }
 
+/* 
+ * Maintain an open connection between peers
+ * Prevent timeouts caused by inactivity
+ * @returns Buffer
+ * */
 export const buildKeepAlive = () => Buffer.alloc(4);
 
+/* 
+ * A choke message is used to instruct a peer to stop sending data.
+ * The structure of a choke message is:
+ * - Length prefix: 1 (indicating the size of the message ID)
+ * - Message ID: 0
+ * returns Buffer
+ */
 export const buildChoke = () => {
   const buf = Buffer.alloc(5)
+  //length
   buf.writeUInt32BE(1, 0);
+  //id
   buf.writeUInt8(0, 4);
   return buf;
 }
@@ -37,6 +70,11 @@ export const buildUnchoke = () => {
   return buf;
 };
 
+/*
+ * message that so that peers can know they have pieces I want to download
+ * intereseted:<len=0001> <id=2>
+ * @returns Buffer
+ */
 export const buildInterested = () => {
   const buf = Buffer.alloc(5);
   // length
@@ -46,15 +84,23 @@ export const buildInterested = () => {
   return buf;
 };
 
+/*
+ *
+ * notinterested:<len=0001> <id=3>
+ */
 export const buildUninterested = () => {
   const buf = Buffer.alloc(5);
   // length
   buf.writeUInt32BE(1, 0);
   // id
   buf.writeUInt8(3, 4);
+  console.log('buildUninteted buffer',buf);
   return buf;
 };
-
+/*
+ * Have msg informs peers that client have succesfully downloaded speicific piece
+ *<len:0005><id=4><piece index>
+ */
 export const buildHave = (payload: any) => {
   const buf = Buffer.alloc(9);
   // length
@@ -66,6 +112,9 @@ export const buildHave = (payload: any) => {
   return buf;
 };
 
+/*
+ * provides pieces info of peers
+ */
 export const buildBitfield = (bitfield: any) => {
   const buf = Buffer.alloc(14);
   // length
