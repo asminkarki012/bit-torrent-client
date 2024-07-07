@@ -2,6 +2,7 @@ import * as net from "net";
 import { Buffer } from "buffer";
 import * as tracker from "./tracker";
 import * as message from "./message";
+import { ParsePayload } from "./types";
 
 module.exports = (torrent: any) => {
   tracker.getPeers(torrent, (peers: any) => {
@@ -43,10 +44,39 @@ const onWholeMsg = (socket: net.Socket, callback: any) => {
 }
 
 const msgHandler = (msg: Buffer, socket: net.Socket) => {
-  if (isHandShake(msg)) socket.write(message.buildInterested());
+  if (isHandShake(msg)) {
+    socket.write(message.buildInterested());
+  } else {
+    const m = message.parse(msg);
+    if (m.id === 0) chokeHandler();
+    else if (m.id === 0) unchokeHandler();
+    else if (m.id === 4) haveHandler(m.payload);
+    else if (m.id === 5) bitfieldHandler(m.payload);
+    else if (m.id === 7) pieceHandler(m.payload);
+  }
 }
 
 const isHandShake = (msg: Buffer) => {
   return msg.length === msg.readInt8(0) + 49 && msg.toString('utf-8') === 'BitTorrent protocol';
 }
+
+const chokeHandler = () => {
+  // Function implementation
+};
+
+const unchokeHandler = () => {
+  // Function implementation
+};
+
+const haveHandler = (payload: ParsePayload) => {
+  // Function implementation
+};
+
+const bitfieldHandler = (payload: ParsePayload) => {
+  // Function implementation
+};
+
+const pieceHandler = (payload: ParsePayload) => {
+  // Function implementation
+};
 

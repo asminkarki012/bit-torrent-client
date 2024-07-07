@@ -1,6 +1,7 @@
 import { Buffer } from 'buffer';
 import * as torrentParser from './torrent-parser'
 import * as util from './util';
+import { ParsePayload } from './types';
 
 /*
 for reference : https://wiki.theory.org/BitTorrentSpecification 
@@ -94,7 +95,7 @@ export const buildUninterested = () => {
   buf.writeUInt32BE(1, 0);
   // id
   buf.writeUInt8(3, 4);
-  console.log('buildUninteted buffer',buf);
+  console.log('buildUninteted buffer', buf);
   return buf;
 };
 /*
@@ -182,3 +183,27 @@ export const buildPort = (payload: any) => {
   return buf;
 };
 
+/*
+ * some messages format
+ * request: <len=0013><id=6><index><begin><length>
+ * piece: <len=0009+X><id=7><index><begin><block>
+ * cancel: <len=0013><id=8><index><begin><length>
+ */
+export const parse = (msg: Buffer) => {
+  const id = msg.length > 4 ? msg.readInt8(4) : null;
+  let payload: ParsePayload = msg.length > 5 ? msg.subarray(5) : null;
+  // request , piece and cancel they have payload
+  if (id === 6 || id == 7 || id === 8) {
+    const rest: Buffer | undefined = payload?.subarray(8);
+    payload = {
+      index: payload?.readUInt32BE(0),
+      begin: payload?.readInt32BE(4)
+    }
+    payload[id === 7 ? 'block' : 'length'] = rest;
+  }
+  return {
+    size: msg.readInt32BE(0),
+    id,
+    payload
+  }
+}

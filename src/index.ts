@@ -1,6 +1,6 @@
 // import { parse } from "url";
 // import { getPeers } from "./tracker";
-import * as torrentParser from "./src/torrent-parser";
+import * as torrentParser from "./torrent-parser";
 
 // const filePath = './src/leaves.torrent';
 // const torrent = ((fs.readFileSync(filePath)));
