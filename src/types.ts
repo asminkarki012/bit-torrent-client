@@ -5,7 +5,7 @@ export type IParsePayload = Buffer | null | {
   index: number | undefined;
   begin: number | undefined,
   block?: Buffer | undefined
-  length?: Buffer | undefined
+  length?: Buffer | number | undefined
 }
 
 export type IQueue = {

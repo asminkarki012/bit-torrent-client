@@ -22,6 +22,9 @@ export const size = (torrent: any): Buffer => {
  */
 export const BLOCK_LEN = 2 ** 14;
 
+/*
+ * gives the piece length since last piece have variable legnth
+ */
 export const pieceLen = (torrent: any, pieceIndex: number) => {
   const totalLength = bufferToBigInt(size(torrent));
   const pieceLength = torrent.info["piece length"];
@@ -41,18 +44,19 @@ export const pieceLen = (torrent: any, pieceIndex: number) => {
 
 }
 
+/*
+ * gives the total number of pieces
+ */
 export const blocksPerPiece = (torrent: any, pieceIndex: number) => {
   const pieceLength = pieceLen(torrent, pieceIndex);
   return Math.ceil(pieceLength / BLOCK_LEN);
 };
 
-export const blockLen = (torrent: any, pieceIndex: number) => {
-
+export const blockLen = (torrent: any, pieceIndex: number, blockIndex: number) => {
   const pieceLength = pieceLen(torrent, pieceIndex);
-  const lastPieceLength = pieceLength % BLOCK_LEN;
-  const lastPieceIndex = pieceLength % BLOCK_LEN;
-  return lastPieceIndex === pieceIndex ? lastPieceLength : BLOCK_LEN
-
+  const lastBlockLength = pieceLength % BLOCK_LEN;
+  const lastBlockIndex = Math.floor(pieceLength / BLOCK_LEN);
+  return blockIndex === lastBlockIndex ? lastBlockLength : BLOCK_LEN
 }
 
 const bigIntToBuffer = (bigInt: number, size: number) => {
