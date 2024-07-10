@@ -1,7 +1,7 @@
 import { Buffer } from 'buffer';
 import * as torrentParser from './torrent-parser'
 import * as util from './util';
-import { ParsePayload } from './types';
+import { IBuildRequestPayload, IParsePayload } from './types';
 
 /*
 for reference : https://wiki.theory.org/BitTorrentSpecification 
@@ -127,7 +127,7 @@ export const buildBitfield = (bitfield: any) => {
   return buf;
 };
 
-export const buildRequest = (payload: any) => {
+export const buildRequest = (payload: IBuildRequestPayload) => {
   const buf = Buffer.alloc(17);
   // length
   buf.writeUInt32BE(13, 0);
@@ -191,7 +191,7 @@ export const buildPort = (payload: any) => {
  */
 export const parse = (msg: Buffer) => {
   const id = msg.length > 4 ? msg.readInt8(4) : null;
-  let payload: ParsePayload = msg.length > 5 ? msg.subarray(5) : null;
+  let payload: IParsePayload = msg.length > 5 ? msg.subarray(5) : null;
   // request , piece and cancel they have payload
   if (id === 6 || id == 7 || id === 8) {
     const rest: Buffer | undefined = payload?.subarray(8);

@@ -1,4 +1,4 @@
-export default class {
+export default class Pieces {
   private requested: boolean[];
   private received: boolean[];
 

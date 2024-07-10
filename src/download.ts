@@ -2,28 +2,35 @@ import * as net from "net";
 import { Buffer } from "buffer";
 import * as tracker from "./tracker";
 import * as message from "./message";
-import { ParsePayload } from "./types";
+import { IParsePayload, IQueue, ISocket } from "./types";
+import Pieces from "./Pieces";
 
 module.exports = (torrent: any) => {
   tracker.getPeers(torrent, (peers: any) => {
-    peers.forEach(download);
+    const EACH_PIECE_SIZE = 20;
+    //gives the total number of pieces
+    const pieces: Pieces = new Pieces(torrent.info.eces.length / EACH_PIECE_SIZE);
+    peers.forEach((peer: unknown) => download(peer, torrent, pieces));
   });
 };
 
 //TCP connection established to download files from peers
-const download = (peer: any) => {
+const download = (peer: any, torrent: unknown, pieces: Pieces) => {
   const { port, ip } = peer;
   const socket = new net.Socket();
   socket.on("error", err => console.log('error in socket', err));
   socket.connect(port, ip, () => {
-    socket.write(Buffer.from("Hello world"));
+    // socket.write(Buffer.from("Hello world"));
+    socket.write(message.buildHandshake(torrent));
   })
 
   // socket.on('data', responseBuffer => {
   //
   // })
   //
-  onWholeMsg(socket, (msg: Buffer) => msgHandler(msg, socket));
+
+  const queue: IQueue = { choked: true, queue: [] };
+  onWholeMsg(socket, (msg: Buffer) => msgHandler(msg, socket, pieces, queue));
 }
 
 const onWholeMsg = (socket: net.Socket, callback: any) => {
@@ -43,16 +50,17 @@ const onWholeMsg = (socket: net.Socket, callback: any) => {
   })
 }
 
-const msgHandler = (msg: Buffer, socket: net.Socket) => {
+
+const msgHandler = (msg: Buffer, socket: net.Socket, pieces: Pieces, queue: IQueue) => {
   if (isHandShake(msg)) {
     socket.write(message.buildInterested());
   } else {
     const m = message.parse(msg);
-    if (m.id === 0) chokeHandler();
-    else if (m.id === 0) unchokeHandler();
-    else if (m.id === 4) haveHandler(m.payload);
+    if (m.id === 0) chokeHandler(socket);
+    else if (m.id === 0) unchokeHandler(socket, pieces, queue);
+    else if (m.id === 4) haveHandler(m.payload, socket, pieces, queue);
     else if (m.id === 5) bitfieldHandler(m.payload);
-    else if (m.id === 7) pieceHandler(m.payload);
+    else if (m.id === 7) pieceHandler(m.payload, socket, pieces, queue);
   }
 }
 
@@ -60,23 +68,50 @@ const isHandShake = (msg: Buffer) => {
   return msg.length === msg.readInt8(0) + 49 && msg.toString('utf-8') === 'BitTorrent protocol';
 }
 
-const chokeHandler = () => {
-  // Function implementation
+const chokeHandler = (socket: net.Socket) => {
+  socket.end();
 };
 
-const unchokeHandler = () => {
-  // Function implementation
+const unchokeHandler = (socket: ISocket, pieces: Pieces, queue: IQueue) => {
+  queue.choked = false;
+  requestPiece(socket, pieces, queue);
 };
 
-const haveHandler = (payload: ParsePayload) => {
-  // Function implementation
+const haveHandler = (payload: IParsePayload, socket: ISocket, requested: Pieces, queue: any) => {
+
 };
 
-const bitfieldHandler = (payload: ParsePayload) => {
-  // Function implementation
+const bitfieldHandler = (payload: IParsePayload) => {
 };
 
-const pieceHandler = (payload: ParsePayload) => {
-  // Function implementation
+const pieceHandler = (payload: IParsePayload, socket: any, requested: Pieces, queue: any) => {
+  queue.shift();
+  requestPiece(socket, requested, queue);
 };
 
+/*
+ * send build request piece message for pieceindex 
+ * that are in queue and also queue need the pieceIndex 
+ * until queue becomes empty
+ * also keep record of added request
+ */
+const requestPiece = (socket: any, pieces: Pieces, queue: IQueue) => {
+  if (queue.choked) return null;
+
+  while (queue.queue.length) {
+    const pieceIndex = queue.queue.shift();
+    if (pieceIndex && pieces.needed(pieceIndex)) {
+      //need to be fixed
+      socket.write(message.buildRequest(pieceIndex));
+      pieces.addRequested(pieceIndex);
+      break;
+    }
+  }
+
+  // if (requested[queue[0]]) {
+  //   queue.shift();
+  // } else {
+  //   // socket.write(message.buildRequest(piecesIndex));
+  // }
+  //
+}

@@ -17,7 +17,45 @@ export const size = (torrent: any): Buffer => {
   return bigIntToBuffer(size, 8)
 }
 
-function bigIntToBuffer(bigInt: number, size: number) {
+/*
+ * function to find pieceIndex, begin index and length of message
+ */
+export const BLOCK_LEN = 2 ** 14;
+
+export const pieceLen = (torrent: any, pieceIndex: number) => {
+  const totalLength = bufferToBigInt(size(torrent));
+  const pieceLength = torrent.info["piece length"];
+  //since last piece may have different lenght
+  const lastPieceLength = totalLength % pieceLength;
+
+  let lastPieceIndex;
+  const lastPiceIndexDiv = (totalLength / pieceLength);
+
+  if (typeof lastPiceIndexDiv === "number") {
+    lastPieceIndex = Math.floor(lastPiceIndexDiv);
+  } else {
+    throw new Error("Last Piece Index is too big");
+  }
+
+  return lastPieceIndex === pieceIndex ? lastPieceLength : pieceLength;
+
+}
+
+export const blocksPerPiece = (torrent: any, pieceIndex: number) => {
+  const pieceLength = pieceLen(torrent, pieceIndex);
+  return Math.ceil(pieceLength / BLOCK_LEN);
+};
+
+export const blockLen = (torrent: any, pieceIndex: number) => {
+
+  const pieceLength = pieceLen(torrent, pieceIndex);
+  const lastPieceLength = pieceLength % BLOCK_LEN;
+  const lastPieceIndex = pieceLength % BLOCK_LEN;
+  return lastPieceIndex === pieceIndex ? lastPieceLength : BLOCK_LEN
+
+}
+
+const bigIntToBuffer = (bigInt: number, size: number) => {
   // Convert BigInt to hexadecimal string
   let hex = bigInt.toString(16);
 
@@ -27,5 +65,12 @@ function bigIntToBuffer(bigInt: number, size: number) {
   // Create a Buffer from the hexadecimal string
   return Buffer.from(hex, 'hex');
 }
+
+const bufferToBigInt = (buffer: Buffer) => {
+  let hex = buffer.toString("hex");
+  const bigIntValue = BigInt("0x" + hex);
+  return bigIntValue;
+};
+
 
 
