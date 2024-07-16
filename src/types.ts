@@ -3,7 +3,7 @@ import dgram from "dgram";
 
 export type IParsePayload = Buffer | null | {
   index: number | undefined;
-  begin: number | undefined,
+  begin: number | undefined;
   block?: Buffer | undefined
   length?: Buffer | number | undefined
 }

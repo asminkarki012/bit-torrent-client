@@ -127,7 +127,7 @@ export const buildBitfield = (bitfield: any) => {
   return buf;
 };
 
-export const buildRequest = (payload: IBuildRequestPayload) => {
+export const buildRequest = (payload: any) => {
   const buf = Buffer.alloc(17);
   // length
   buf.writeUInt32BE(13, 0);

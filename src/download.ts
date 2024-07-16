@@ -1,21 +1,26 @@
 import * as net from "net";
 import { Buffer } from "buffer";
+import * as fs from "fs";
+import * as path from "path";
 import * as tracker from "./tracker";
 import * as message from "./message";
 import { IParsePayload, IQueue, ISocket } from "./types";
 import Pieces from "./Pieces";
+import Queue from "./Queue";
 
-module.exports = (torrent: any) => {
+export default (torrent: any, fileName: string) => {
+  const defaultPath = path.join(__dirname, fileName);
   tracker.getPeers(torrent, (peers: any) => {
     const EACH_PIECE_SIZE = 20;
     //gives the total number of pieces
-    const pieces: Pieces = new Pieces(torrent.info.eces.length / EACH_PIECE_SIZE);
-    peers.forEach((peer: unknown) => download(peer, torrent, pieces));
+    const pieces: Pieces = new Pieces(torrent.info.pieces.length / EACH_PIECE_SIZE);
+    const fileDesc = fs.openSync(defaultPath, "w")
+    peers.forEach((peer: unknown) => download(peer, torrent, pieces, fileDesc));
   });
 };
 
 //TCP connection established to download files from peers
-const download = (peer: any, torrent: unknown, pieces: Pieces) => {
+const download = (peer: any, torrent: unknown, pieces: Pieces, fileDesc: number) => {
   const { port, ip } = peer;
   const socket = new net.Socket();
   socket.on("error", err => console.log('error in socket', err));
@@ -29,8 +34,8 @@ const download = (peer: any, torrent: unknown, pieces: Pieces) => {
   // })
   //
 
-  const queue: IQueue = { choked: true, queue: [] };
-  onWholeMsg(socket, (msg: Buffer) => msgHandler(msg, socket, pieces, queue));
+  const queueInstance = new Queue(torrent);
+  onWholeMsg(socket, (msg: Buffer) => msgHandler(msg, socket, pieces, queueInstance, torrent, fileDesc));
 }
 
 const onWholeMsg = (socket: net.Socket, callback: any) => {
@@ -51,7 +56,7 @@ const onWholeMsg = (socket: net.Socket, callback: any) => {
 }
 
 
-const msgHandler = (msg: Buffer, socket: net.Socket, pieces: Pieces, queue: IQueue) => {
+const msgHandler = (msg: Buffer, socket: net.Socket, pieces: Pieces, queue: Queue, torrent: any, fileDesc: number) => {
   if (isHandShake(msg)) {
     socket.write(message.buildInterested());
   } else {
@@ -59,8 +64,8 @@ const msgHandler = (msg: Buffer, socket: net.Socket, pieces: Pieces, queue: IQue
     if (m.id === 0) chokeHandler(socket);
     else if (m.id === 0) unchokeHandler(socket, pieces, queue);
     else if (m.id === 4) haveHandler(m.payload, socket, pieces, queue);
-    else if (m.id === 5) bitfieldHandler(m.payload);
-    else if (m.id === 7) pieceHandler(m.payload, socket, pieces, queue);
+    else if (m.id === 5) bitfieldHandler(m.payload, socket, pieces, queue);
+    else if (m.id === 7) pieceHandler(m.payload, socket, pieces, queue, torrent, fileDesc);
   }
 }
 
@@ -72,21 +77,56 @@ const chokeHandler = (socket: net.Socket) => {
   socket.end();
 };
 
-const unchokeHandler = (socket: ISocket, pieces: Pieces, queue: IQueue) => {
+const unchokeHandler = (socket: ISocket, pieces: Pieces, queue: Queue) => {
   queue.choked = false;
   requestPiece(socket, pieces, queue);
 };
 
-const haveHandler = (payload: IParsePayload, socket: ISocket, requested: Pieces, queue: any) => {
-
+const haveHandler = (payload: any, socket: ISocket, requested: Pieces, queue: any) => {
+  const pieceIndex = payload.readUInt32BE(0);
+  const queueEmpty = queue.length() === 0;
+  queue.queue(pieceIndex);
+  if (queueEmpty) requestPiece(socket, requested, queue);
 };
 
-const bitfieldHandler = (payload: IParsePayload) => {
+/*
+ *  *
+ */
+const bitfieldHandler = (payload: any, socket: ISocket, pieces: Pieces, queue: Queue) => {
+  const queueEmpty = queue.length() === 0;
+  payload.forEach((byte: any, i: number) => {
+    /*
+     *if LSB of byte is 1 then piece is  available for peer then calculate piece index and add to the piece queue
+     *
+     */
+    for (let j = 0; j < 8; j++) {
+      // if LSB is 1 then piece is present hence added to piece queue
+      if (byte % 2) queue.queue(i * 8 + 7 - j);
+      //shift byte right by 1bit
+      byte = Math.floor(byte / 2);
+    }
+  });
+  if (queueEmpty) requestPiece(socket, pieces, queue);
 };
 
-const pieceHandler = (payload: IParsePayload, socket: any, requested: Pieces, queue: any) => {
+const pieceHandler = (pieceResp: any, socket: any, pieces: Pieces, queue: any, torrent: any, fileDesc: number) => {
   queue.shift();
-  requestPiece(socket, requested, queue);
+  console.log("pieceReskp", pieceResp);
+  pieces.addReceived(pieceResp);
+
+  /*
+   * since pieceResp.begin only gives us offset realtive to piece we need to calculate abs offset
+   */
+  const offset = pieceResp.index * torrent['piece length'] + pieceResp.begin;
+  fs.write(fileDesc, pieceResp.block, 0, pieceResp.block.length, offset, () => { });
+
+  if (pieces.isDone()) {
+    console.log("DONE!");
+    socket.close();
+    try { fs.closeSync(fileDesc) } catch (e) { }
+  } else {
+    requestPiece(socket, pieces, queue);
+  }
 };
 
 /*
@@ -95,15 +135,15 @@ const pieceHandler = (payload: IParsePayload, socket: any, requested: Pieces, qu
  * until queue becomes empty
  * also keep record of added request
  */
-const requestPiece = (socket: any, pieces: Pieces, queue: IQueue) => {
+const requestPiece = (socket: any, pieces: Pieces, queue: Queue) => {
   if (queue.choked) return null;
 
-  while (queue.queue.length) {
-    const pieceIndex = queue.queue.shift();
-    if (pieceIndex && pieces.needed(pieceIndex)) {
+  while (queue.length()) {
+    const pieceBlock = queue.deque();
+    if (pieceBlock && pieces.needed(pieceBlock)) {
       //need to be fixed
-      socket.write(message.buildRequest(pieceIndex));
-      pieces.addRequested(pieceIndex);
+      socket.write(message.buildRequest(pieceBlock));
+      pieces.addRequested(pieceBlock);
       break;
     }
   }

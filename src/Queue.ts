@@ -1,10 +1,13 @@
 import * as tp from "./torrent-parser";
 import { IParsePayload } from "./types";
 
+/* 
+ * queue for keeping track of block of pieces
+ */
 export default class Queue {
   private _torrent: any;
   private _queue: IParsePayload[];
-  private choked: boolean;
+  public choked: boolean;
 
   constructor(torrent: any) {
     this._torrent = torrent;

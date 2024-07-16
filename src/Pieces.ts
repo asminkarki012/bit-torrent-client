@@ -1,28 +1,58 @@
+import * as tp from "./torrent-parser";
+
 export default class Pieces {
-  private requested: boolean[];
-  private received: boolean[];
+  private _requested: boolean[][];
+  private _received: boolean[][];
 
-  constructor(size: number) {
-    this.requested = new Array(size).fill(false);
-    this.received = new Array(size).fill(false);
-  }
+  constructor(torrent: any) {
+    const buildPiecesArray = () => {
+      const PIECE_HASH_LENGTH = 20  //since each piece hash is 20 bytes long
+      const nPieces = torrent.info.pieces.length / PIECE_HASH_LENGTH;
+      const arr = Array(nPieces).fill(null);
 
-  addRequested(pieceIndex: number): void {
-    this.requested[pieceIndex] = true;
-  }
-
-  addReceived(pieceIndex: number): void {
-    this.received[pieceIndex] = true;
-  }
-
-  needed(pieceIndex: number): boolean {
-    if (this.requested.every(i => i === true)) {
-      this.requested = this.received.slice();
+      return arr.map((_, i) =>
+        new Array(tp.blocksPerPiece(torrent, i)).fill(false)
+      )
     }
-    return !this.requested[pieceIndex];
+    this._requested = buildPiecesArray()
+    this._received = buildPiecesArray();
+  }
+
+  addRequested(pieceBlock: any): void {
+    if (!this.isValidPieceBlock(pieceBlock)) return;
+    const blockIndex = this.calculateBlockIndex(pieceBlock.begin);
+    this._requested[pieceBlock.index][blockIndex] = true;
+  }
+
+  addReceived(pieceBlock: any): void {
+    if (!this.isValidPieceBlock(pieceBlock)) return;
+    const blockIndex = this.calculateBlockIndex(pieceBlock.begin);
+    this._received[pieceBlock.index][blockIndex] = true;
+  }
+
+  needed(pieceBlock: any): boolean | undefined {
+    if (!this.isValidPieceBlock(pieceBlock)) return;
+    if (
+      this._requested.every(blocks => blocks.every(block => block))
+
+    ) {
+      this._requested = this._received.map(blocks => blocks.slice());
+    }
+    const blockIndex = this.calculateBlockIndex(pieceBlock.begin);
+    return !this._requested[pieceBlock.index][blockIndex];
   }
 
   isDone(): boolean {
-    return this.received.every(i => i === true);
+    return this._received.every(blocks => blocks.every(block => block));
   }
+
+  calculateBlockIndex(pieceBlockBegin: number): number {
+    return Math.floor(pieceBlockBegin / tp.BLOCK_LEN);
+  }
+
+  isValidPieceBlock(pieceBlock: any): boolean {
+    return pieceBlock && pieceBlock.begin;
+  }
+
 }
+

@@ -32,10 +32,10 @@ export const pieceLen = (torrent: any, pieceIndex: number) => {
   const lastPieceLength = totalLength % pieceLength;
 
   let lastPieceIndex;
-  const lastPiceIndexDiv = (totalLength / pieceLength);
+  const lastPieceIndexDiv = (totalLength / pieceLength);
 
-  if (typeof lastPiceIndexDiv === "number") {
-    lastPieceIndex = Math.floor(lastPiceIndexDiv);
+  if (typeof lastPieceIndexDiv === "number") {
+    lastPieceIndex = Math.floor(lastPieceIndexDiv);
   } else {
     throw new Error("Last Piece Index is too big");
   }
