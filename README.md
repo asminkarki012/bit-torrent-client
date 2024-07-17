@@ -4,3 +4,4 @@ Further TODO:
 - pausing and resuming the downloads
 - implement distributed hash tables
 - support upload files
+- support magnet link
