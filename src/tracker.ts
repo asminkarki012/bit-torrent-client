@@ -7,10 +7,11 @@ import { Buffer } from "buffer";
 import crypto from "crypto"
 import * as util from "./util";
 
-
-const socket = dgram.createSocket('udp4');
+//udp connection
 export const getPeers = (torrent: any, callback: any) => {
-  const url = torrent.announce;
+  const socket = dgram.createSocket('udp4');
+  const url = Buffer.from(torrent.announce).toString();
+  // const url = Buffer.from(torrent.announce).toString();
   udpSend(socket, buildConnReq(), url);
 
   socket.on('message', response => {

@@ -9,7 +9,7 @@ import * as crypto from "crypto"
     console.log("here iam");
     id = crypto.randomBytes(20);
     console.log("here iam", id);
-    Buffer.from('-NCT0001').copy(id,0);
+    Buffer.from('-NT0001').copy(id,0);
 
   }
   return id;

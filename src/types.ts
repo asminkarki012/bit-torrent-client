@@ -21,3 +21,18 @@ export type IBuildRequestPayload = {
 }
 
 export type ISocket = net.Socket | dgram.Socket;
+
+export type TorrentInfo = {
+  announce: Uint8Array;
+  'announce-list': Uint8Array[][][]; // Nested Uint8Array for each announce-list tier
+  'creation date': number;
+  info: {
+    files: {
+      length: number;
+      path: Uint8Array[]; // Files may include paths in Uint8Array format
+    }[];
+    name: Uint8Array;
+    'piece length': number;
+    pieces: Uint8Array;
+  };
+}

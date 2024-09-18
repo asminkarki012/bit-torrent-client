@@ -9,7 +9,7 @@ import Pieces from "./Pieces";
 import Queue from "./Queue";
 
 export default (torrent: any, fileName: string) => {
-  const defaultPath = path.join(__dirname, fileName);
+  const defaultPath = path.join(process.cwd(), fileName);
   tracker.getPeers(torrent, (peers: any) => {
     const EACH_PIECE_SIZE = 20;
     //gives the total number of pieces
