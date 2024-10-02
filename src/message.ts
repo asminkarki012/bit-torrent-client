@@ -1,7 +1,7 @@
-import { Buffer } from 'buffer';
-import * as torrentParser from './torrent-parser'
-import * as util from './util';
-import { IBuildRequestPayload, IParsePayload } from './types';
+import { Buffer } from "buffer";
+import * as torrentParser from "./torrent-parser";
+import * as util from "./util";
+import { IBuildRequestPayload, IParsePayload } from "./types";
 
 /*
 for reference : https://wiki.theory.org/BitTorrentSpecification 
@@ -24,29 +24,33 @@ Peer ID: -AZ2060-283292789234 (example 20-byte identifier)
 export const buildHandshake = (torrent: unknown) => {
   //68 bytes
   const buf = Buffer.alloc(68);
-  //pstrlen 
-  buf.writeInt8(19, 0)
+  //pstrlen
+  buf.writeInt8(19, 0);
   //pstr
-  buf.write('BitTorrent protocol', 1)
+  buf.write("BitTorrent protocol", 1);
   //reserved
   buf.writeUInt32BE(0, 20);
-  buf.writeUInt32BE(0, 24)
+  buf.writeUInt32BE(0, 24);
   //info hash
   torrentParser.infoHash(torrent).copy(buf, 28);
 
+  console.log("after infohash",buf.toString('hex'));
+  console.log("handshake lenght",buf.length);
   // peer id
-  buf.write(util.genId())
+  util.genId().copy(buf, 48);
+  console.log("buff when handshake",buf.toString('hex'));
+  console.log("handshake lenght",buf.length);
   return buf;
-}
+};
 
-/* 
+/*
  * Maintain an open connection between peers
  * Prevent timeouts caused by inactivity
  * @returns Buffer
  * */
 export const buildKeepAlive = () => Buffer.alloc(4);
 
-/* 
+/*
  * A choke message is used to instruct a peer to stop sending data.
  * The structure of a choke message is:
  * - Length prefix: 1 (indicating the size of the message ID)
@@ -54,13 +58,13 @@ export const buildKeepAlive = () => Buffer.alloc(4);
  * returns Buffer
  */
 export const buildChoke = () => {
-  const buf = Buffer.alloc(5)
+  const buf = Buffer.alloc(5);
   //length
   buf.writeUInt32BE(1, 0);
   //id
   buf.writeUInt8(0, 4);
   return buf;
-}
+};
 
 export const buildUnchoke = () => {
   const buf = Buffer.alloc(5);
@@ -95,7 +99,7 @@ export const buildUninterested = () => {
   buf.writeUInt32BE(1, 0);
   // id
   buf.writeUInt8(3, 4);
-  console.log('buildUninteted buffer', buf);
+  console.log("buildUninteted buffer", buf);
   return buf;
 };
 /*
@@ -197,13 +201,13 @@ export const parse = (msg: Buffer) => {
     const rest: Buffer | undefined = payload?.subarray(8);
     payload = {
       index: payload?.readUInt32BE(0),
-      begin: payload?.readInt32BE(4)
-    }
-    payload[id === 7 ? 'block' : 'length'] = rest;
+      begin: payload?.readInt32BE(4),
+    };
+    payload[id === 7 ? "block" : "length"] = rest;
   }
   return {
     size: msg.readInt32BE(0),
     id,
-    payload
-  }
-}
+    payload,
+  };
+};

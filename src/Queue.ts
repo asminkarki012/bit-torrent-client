@@ -1,7 +1,7 @@
 import * as tp from "./torrent-parser";
 import { IParsePayload } from "./types";
 
-/* 
+/*
  * queue for keeping track of block of pieces
  */
 export default class Queue {
@@ -21,15 +21,21 @@ export default class Queue {
       const pieceBlock = {
         index: pieceIndex,
         begin: i * tp.BLOCK_LEN,
-        length: tp.blockLen(this._torrent, pieceIndex, i)
+        length: tp.blockLen(this._torrent, pieceIndex, i),
       };
       this._queue.push(pieceBlock);
     }
   }
 
-  deque() { return this._queue.shift(); }
+  deque() {
+    return this._queue.shift();
+  }
 
-  peek() { return this._queue[0]; }
+  peek() {
+    return this._queue[0];
+  }
 
-  length() { return this._queue.length; }
-};
+  length() {
+    return this._queue.length;
+  }
+}
