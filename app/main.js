@@ -4,7 +4,7 @@ const util = require("util");
 // Examples:
 // - decodeBencode("5:hello") -> "hello"
 // - decodeBencode("10:hello12345") -> "hello12345"
- function decodeBencode(bencodedValue) {
+function decodeBencode(bencodedValue) {
   // Check if the first character is a digit
   const isBencodedInteger =
     bencodedValue[0] === "i" && bencodedValue[bencodedValue.length - 1] === "e";
