@@ -39,3 +39,10 @@ export type TorrentInfo = {
     "pieces": Uint8Array;
   };
 };
+
+export type FileDescriptor = {
+  path: string;
+  length: number;
+  descriptor: number | null; // Initially null, but will be a number once the file is opened
+  offset: number;
+};

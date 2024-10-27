@@ -34,12 +34,10 @@ export const buildHandshake = (torrent: unknown) => {
   //info hash
   torrentParser.infoHash(torrent).copy(buf, 28);
 
-  console.log("after infohash",buf.toString('hex'));
-  console.log("handshake lenght",buf.length);
+  console.log("after infohash", buf.toString("hex"));
+  console.log("handshake lenght", buf.length);
   // peer id
   util.genId().copy(buf, 48);
-  console.log("buff when handshake",buf.toString('hex'));
-  console.log("handshake lenght",buf.length);
   return buf;
 };
 
