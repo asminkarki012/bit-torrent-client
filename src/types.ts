@@ -5,11 +5,11 @@ export type IParsePayload =
   | Buffer
   | null
   | {
-      index: number | undefined;
-      begin: number | undefined;
-      block?: Buffer | undefined;
-      length?: Buffer | number | undefined;
-    };
+    index: number | undefined;
+    begin: number | undefined;
+    block?: Buffer | undefined;
+    length?: Buffer | number | undefined;
+  };
 
 export type IQueue = {
   choked: boolean;
@@ -45,4 +45,4 @@ export type FileDescriptor = {
   length: number;
   descriptor: number | null; // Initially null, but will be a number once the file is opened
   offset: number;
-};
+}

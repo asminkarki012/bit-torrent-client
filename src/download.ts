@@ -88,7 +88,6 @@ const download = (
 };
 
 const onWholeMsg = (socket: net.Socket, callback: any) => {
-  console.log("onWholeMsg");
   let savedBuf = Buffer.alloc(0);
   let handShake = true;
 
@@ -116,13 +115,12 @@ const msgHandler = (
   fileDesc: number
 ) => {
   if (isHandShake(msg)) {
-    console.log("handshaking success");
+    console.log("========handshaking success=======");
     socket.write(message.buildInterested());
   } else {
     const m = message.parse(msg);
-    console.log("parsed Msg", m);
     if (m.id === 0) chokeHandler(socket);
-    else if (m.id === 0) unchokeHandler(socket, pieces, queue);
+    else if (m.id === 1) unchokeHandler(socket, pieces, queue);
     else if (m.id === 4) haveHandler(m.payload, socket, pieces, queue);
     else if (m.id === 5) bitfieldHandler(m.payload, socket, pieces, queue);
     else if (m.id === 7)
@@ -133,7 +131,7 @@ const msgHandler = (
 const isHandShake = (msg: Buffer) => {
   return (
     msg.length === msg.readInt8(0) + 49 &&
-    msg.toString("utf-8") === "BitTorrent protocol"
+    msg.toString('utf8', 1, 1 + msg.readUInt8(0)) === "BitTorrent protocol"
   );
 };
 
@@ -190,32 +188,38 @@ const pieceHandler = (
   pieces: Pieces,
   queue: any,
   torrent: any,
-  fileDesc: number
+  fileDesc: any
 ) => {
-  queue.shift();
-  console.log("pieceReskp", pieceResp);
+  const fileIndex = findFileIndex(torrent, fileDesc, pieceResp.index);
+
+
+  const file = fileDesc[fileIndex];
+  // calculate relative piece index within the file
+  const relativePieceIndex = pieceResp.index - file.offset;
+
   pieces.addReceived(pieceResp);
 
   /*
-   * since pieceResp.begin only gives us offset realtive to piece we need to calculate abs offset
+   * since pieceResp.begin only gives us offset relative to piece we need to calculate abs offset
    */
-  const offset = pieceResp.index * torrent["piece length"] + pieceResp.begin;
-  fs.write(
-    fileDesc,
-    pieceResp.block,
-    0,
-    pieceResp.block.length,
-    offset,
-    () => {}
-  );
+  const offset = file.offset + relativePieceIndex * torrent.info["piece length"] + pieceResp.begin;
+
+
+  fs.write(file.descriptor, pieceResp.block, 0, pieceResp.block.length, offset, () => { });
 
   if (pieces.isDone()) {
-    console.log("DONE!");
+    console.log("\nDOWNLOAD COMPLETE!\n");
     socket.close();
+
     try {
-      fs.closeSync(fileDesc);
-    } catch (e) {}
+      fs.closeSync(file.descriptor);
+      process.exit(0);
+    } catch (e) { }
   } else {
+    const progress = (pieces.totalReceivedBlocks / pieces.totalBlocks) * 100;
+    const formattedProgress = progress.toPrecision(3);
+    process.stdout.cursorTo(0); // Reset cursor position first
+    process.stdout.write(`Downloading... ${formattedProgress}%\n`);
     requestPiece(socket, pieces, queue);
   }
 };
@@ -232,17 +236,29 @@ const requestPiece = (socket: any, pieces: Pieces, queue: Queue) => {
   while (queue.length()) {
     const pieceBlock = queue.deque();
     if (pieceBlock && pieces.needed(pieceBlock)) {
-      //need to be fixed
       socket.write(message.buildRequest(pieceBlock));
       pieces.addRequested(pieceBlock);
       break;
     }
   }
 
-  // if (requested[queue[0]]) {
-  //   queue.shift();
-  // } else {
-  //   // socket.write(message.buildRequest(piecesIndex));
-  // }
-  //
 };
+
+
+
+const findFileIndex = (torrent: any, files: any, pieceIndex: number): number => {
+  let offset = 0;
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const piecesInFile = Math.ceil(file.length / torrent.info["piece length"]);
+
+    if (pieceIndex < offset + piecesInFile) {
+      return i;
+    }
+
+    offset += piecesInFile;
+  }
+
+  return -1; // error: piece index does not correspond to any file
+}

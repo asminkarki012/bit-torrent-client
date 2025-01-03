@@ -3,6 +3,8 @@ import * as tp from "./torrent-parser";
 export default class Pieces {
   private _received: boolean[][];
   private _requested: boolean[][];
+  totalBlocks: number
+  totalReceivedBlocks: number
 
   constructor(torrent: any) {
     const buildPiecesArray = () => {
@@ -10,7 +12,7 @@ export default class Pieces {
       console.log("Piece length", torrent.info.pieces.length);
       const nPieces = torrent.info.pieces.length / PIECE_HASH_LENGTH;
       const arr = Array(nPieces).fill(null);
-      console.log("number of pieces",nPieces);
+      console.log("number of pieces", nPieces);
 
       return arr.map((_, i) =>
         new Array(tp.blocksPerPiece(torrent, i)).fill(false)
@@ -18,6 +20,13 @@ export default class Pieces {
     };
     this._requested = buildPiecesArray();
     this._received = buildPiecesArray();
+
+    this.totalBlocks = this._requested
+      .map((piece) => {
+        return piece.reduce((count, _) => count + 1, 0);
+      })
+      .reduce((acc, curr) => acc + curr, 0);
+    this.totalReceivedBlocks = 0;
   }
 
   addRequested(pieceBlock: any): void {
@@ -30,6 +39,7 @@ export default class Pieces {
     if (!this.isValidPieceBlock(pieceBlock)) return;
     const blockIndex = this.calculateBlockIndex(pieceBlock.begin);
     this._received[pieceBlock.index][blockIndex] = true;
+    this.totalReceivedBlocks = this.totalReceivedBlocks + 1;
   }
 
   needed(pieceBlock: any): boolean | undefined {
@@ -38,6 +48,7 @@ export default class Pieces {
       this._requested = this._received.map((blocks) => blocks.slice());
     }
     const blockIndex = this.calculateBlockIndex(pieceBlock.begin);
+    console.log("blocke indexxxxxxxx",blockIndex);
     return !this._requested[pieceBlock.index][blockIndex];
   }
 
@@ -49,7 +60,9 @@ export default class Pieces {
     return Math.floor(pieceBlockBegin / tp.BLOCK_LEN);
   }
 
+  //error occured here pieceBlock.begin=0 then becomes invalid
   isValidPieceBlock(pieceBlock: any): boolean {
-    return pieceBlock && pieceBlock.begin;
+    return pieceBlock && pieceBlock.begin !== undefined;
+
   }
 }

@@ -3,7 +3,7 @@ import * as crypto from "crypto";
 let id: Buffer | null = null;
 
 export const genId = (): any => {
-  const nodePeerId = "-BN0001-";
+  const nodePeerId = "-BN0001";
   console.log("=== node peer id===", nodePeerId);
   if (!id) {
     id = crypto.randomBytes(20);

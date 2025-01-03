@@ -15,13 +15,11 @@ export const getPeers = (torrent: any, callback: any) => {
 
   //https://nodejs.org/api/dgram.html#event-message for dgram socket.on
   socket.on("message", (response, rinfo) => {
-    console.log(
-      `socket got: response type ${response.readUInt32BE(0)} from ${
-        rinfo.address
-      }:${rinfo.port} of message size ${rinfo.size}byte of family ${
-        rinfo.family
-      }`
-    );
+    // console.log(
+    //   `socket got: response type ${response.readUInt32BE(0)} from ${rinfo.address
+    //   }:${rinfo.port} of message size ${rinfo.size}byte of family ${rinfo.family
+    //   }`
+    // );
     if (respType(response) === "connect") {
       // 2. receive and parse connect response
       const connResp = parseConnResp(response);
@@ -44,7 +42,9 @@ const udpSend = (
   socket: dgram.Socket,
   message: Buffer | string,
   rawUrl: string,
-  callback: () => void = () => {}
+  callback = (err: any) => {
+    console.log({ udp_send_error: err });
+  }
 ) => {
   const url: URL = new URL(rawUrl);
   const urlPort = Number(url.port);
@@ -110,42 +110,40 @@ const buildAnnounceReq = (connId: any, torrent: any, port = 6881) => {
   //uploaded
   Buffer.alloc(8).copy(buf, 72);
   //event
+  //0: none; 1:completed; 2:started; 3:stopped
   buf.writeUInt32BE(0, 80);
   //ip addr
+  //0 default
   buf.writeUInt32BE(0, 84);
   //key
   crypto.randomBytes(4).copy(buf, 88);
   //num want
+  ////-1 default
   buf.writeInt32BE(-1, 92);
   //port
   buf.writeUint16BE(port, 96);
   console.log("lenght of build annoucne req", buf.length);
   return buf;
 };
+function parseAnnounceResp(resp: Buffer) {
+  function group(iterable: Buffer, groupSize: number): Buffer[] {
+    let groups = [];
+    for (let i = 0; i < iterable.length; i += groupSize) {
+      groups.push(iterable.slice(i, i + groupSize));
+    }
+    return groups;
+  }
 
-const parseAnnounceResp = (response: any) => {
   return {
-    action: response.readUInt32BE(0),
-    transactionId: response.readUInt32BE(4),
-    leechers: response.readUInt32BE(8),
-    seeders: response.readUInt32BE(12),
-    peers: group(response.slice(20), 6).map((addr) => {
-      console.log("addr", addr);
-      //addr <Buffer df 84 2e b6 f2 69>
+    action: resp.readUInt32BE(0),
+    transactionId: resp.readUInt32BE(4),
+    leecher: resp.readUInt32BE(8),
+    seeders: resp.readUInt32BE(12),
+    peers: group(resp.slice(20), 6).map((address) => {
       return {
-        ip: addr.subarray(0, 4).join("."),
-        port: addr.readUInt16BE(4),
+        ip: address.slice(0, 4).join("."),
+        port: address.readUInt16BE(4),
       };
     }),
   };
-};
-
-function group(iteratable: Buffer[], groupSize: number): Buffer[] {
-  const groups = [];
-  //seems like issue for allen torrent tutorial
-  for (let index = 0; index < iteratable.length; index += groupSize) {
-    groups.push(iteratable.slice(index, index + groupSize));
-  }
-
-  return groups.flat();
 }

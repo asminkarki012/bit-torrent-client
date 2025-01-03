@@ -19,8 +19,8 @@ export const infoHash = (torrent: any) => {
 export const size = (torrent: any): Buffer => {
   const size = torrent.info.files
     ? torrent.info.files
-        .map((file: any) => file.length)
-        .reduce((acc: number, curr: number) => acc + curr, 0)
+      .map((file: any) => file.length)
+      .reduce((acc: number, curr: number) => acc + curr, 0)
     : torrent.info.length;
 
   return bigIntToBuffer(BigInt(size), 8);
@@ -83,6 +83,7 @@ export const blockLen = (
  * const buffer = bigIntToBuffer(BigInt("12345678901234567890"), 8);
  * console.log(buffer); // Outputs the Buffer representation of the BigInt*
  */
+
 const bigIntToBuffer = (bigInt: BigInt, width: number) => {
   // Convert BigInt to hexadecimal string
   let hex = bigInt.toString(16);
@@ -99,3 +100,4 @@ const bufferToBigInt = (buffer: Buffer) => {
   const bigIntValue = BigInt("0x" + hex);
   return bigIntValue;
 };
+
