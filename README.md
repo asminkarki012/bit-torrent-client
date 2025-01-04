@@ -36,4 +36,4 @@ for now default is "torrents/electronics.torrent".Other file might not work as t
 - <http://bittorrent.org/beps/bep_0041.html>
 - <https://allenkim67.github.io/programming/2016/05/04/how-to-make-your-own-bittorrent-client.html>
 - <https://github.com/nischaldutt/mytorrent-client>
--[Bit torrent specification wiki](https://wiki.theory.org/BitTorrentSpecification#bitfield:_.3Clen.3D0001.2BX.3E.3Cid.3D5.3E.3Cbitfield.3E)
+- [Bit torrent specification wiki](https://wiki.theory.org/BitTorrentSpecification#bitfield:_.3Clen.3D0001.2BX.3E.3Cid.3D5.3E.3Cbitfield.3E)
