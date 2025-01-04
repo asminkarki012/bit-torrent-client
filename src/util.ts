@@ -1,18 +1,13 @@
-import * as crypto from "crypto"
+import * as crypto from "crypto";
 
- export const genId = ():any => {
-  console.log("idddddd here")
-  console.log("client name is node-cli-torrent(NCT)");
-  
-  let id = null;
+let id: Buffer | null = null;
+
+export const genId = (): any => {
+  const nodePeerId = "-BN0001";
+  console.log("=== node peer id===", nodePeerId);
   if (!id) {
-    console.log("here iam");
     id = crypto.randomBytes(20);
-    console.log("here iam", id);
-    Buffer.from('-NCT0001').copy(id,0);
-
+    Buffer.from(nodePeerId).copy(id, 0);
   }
   return id;
-}
-console.log("genId", genId());
-
+};

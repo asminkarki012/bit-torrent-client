@@ -9,7 +9,8 @@
     "dev": "npx nodemon",
     "start": "npm run build && node dist/index.js",
     "test": "jest",
-    "test:dev": "jest --watchAll"
+    "test:dev": "jest --watchAll",
+    "dev-start": "npx tsx src/index.ts"
   },
   "husky": {
     "hooks": {
@@ -23,11 +24,12 @@
     "@types/bencode": "^2.0.4",
     "@types/node": "^20.13.0",
     "nodemon": "^3.1.2",
-    "ts-node": "^10.9.2",
-    "tsx": "^4.15.2",
+    "tsx": "^4.19.1",
+    "typedoc": "^0.26.7",
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "bencode": "^4.0.0"
+    "bencode": "^4.0.0",
+    "bigint-buffer": "^1.1.5"
   }
 }
