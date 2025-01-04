@@ -197,6 +197,8 @@ const pieceHandler = (
   // calculate relative piece index within the file
   const relativePieceIndex = pieceResp.index - file.offset;
 
+  console.log({ file, pieceResp })
+
   pieces.addReceived(pieceResp);
 
   /*
@@ -208,7 +210,7 @@ const pieceHandler = (
   fs.write(file.descriptor, pieceResp.block, 0, pieceResp.block.length, offset, () => { });
 
   if (pieces.isDone()) {
-    console.log("\nDOWNLOAD COMPLETE!\n");
+    console.log("\n========DOWNLOAD COMPLETE!============\n");
     socket.close();
 
     try {
