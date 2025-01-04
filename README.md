@@ -1,6 +1,6 @@
-Writing bit torrent client.
+# Writing bit torrent client
 
-Things I Learned:
+## Things I Learned
 
 - Working of bit torrent client  
 - Managing UDP(dgram in node) and TCP(net.Socket in node) connection socket
@@ -8,17 +8,33 @@ Things I Learned:
 - big-endian byte-ordering system
 - Writing and parsing Bit torrent protocol buffers
 
-Further TODO:
+## Running program
+
+```
+npm i
+```
+
+```
+ tsx src/index.ts torrents/<select-torrent-file>
+````
+
+for now default is "torrents/electronics.torrent".Other file might not work as they do not valid tracker url or i have handle other cases.
+
+```
+```
+
+## Further TODO
+
 - Need to support announce-list ie multiple tracker options
 - pausing and resuming the downloads
 - Reconnect when connection is dropped
 - implement distributed hash tables
 - support magnet link
 - support upload files
-- making simple ui for it 
-- multiple torrent download 
+- making simple ui for it
+- multiple torrent download
 
-References:
+## References
 
 - <http://bittorrent.org/beps/bep_0041.html>
 - <https://allenkim67.github.io/programming/2016/05/04/how-to-make-your-own-bittorrent-client.html>
