@@ -17,7 +17,7 @@ npm i
  tsx src/index.ts torrents/<select-torrent-file>
 ````
 
-for now default is "torrents/electronics.torrent".Other file might not work as they do not valid tracker url or i have handle other cases.
+for now default is "torrents/electronics.torrent".Other file might not work as they do not valid tracker url or have not handle other cases.
 
 ## Further TODO
 
