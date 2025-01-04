@@ -11,6 +11,7 @@ export const getPeers = (torrent: any, callback: any) => {
   console.log("torrent announce", torrent.announce);
 
   const url = Buffer.from(torrent.announce).toString();
+  console.log("==========TRACKER URL============", url)
 
   udpSend(socket, buildConnReq(), url);
 
