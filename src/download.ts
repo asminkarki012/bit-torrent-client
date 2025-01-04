@@ -57,7 +57,7 @@ const intializeFiles = (torrent: TorrentInfo, path: Buffer) => {
 //TCP connection established to download files from peers
 const download = (
   peer: Peer,
-  torrent: unknown,
+  torrent: TorrentInfo,
   pieces: Pieces,
   fileDesc: any
 ) => {
@@ -134,10 +134,10 @@ const isHandShake = (msg: Buffer) => {
 };
 
 const chokeHandler = (socket: net.Socket) => {
-  socket.end();
   socket.on('end', () => {
-    console.log("TCP connection socket closed")
+    console.log("TCP connection socket ended")
   })
+  socket.end();
 };
 
 const unchokeHandler = (socket: TCPSocket, pieces: Pieces, queue: Queue) => {
@@ -191,8 +191,10 @@ const pieceHandler = (
   torrent: any,
   fileDesc: any
 ) => {
-  const fileIndex = findFileIndex(torrent, fileDesc, pieceResp.index);
 
+  pieces.addReceived(pieceResp);
+
+  const fileIndex = findFileIndex(torrent, fileDesc, pieceResp.index);
 
   const file = fileDesc[fileIndex];
   // calculate relative piece index within the file
@@ -200,7 +202,6 @@ const pieceHandler = (
 
   console.log({ file, pieceResp })
 
-  pieces.addReceived(pieceResp);
 
   /*
    * since pieceResp.begin only gives us offset relative to piece we need to calculate abs offset
@@ -212,11 +213,12 @@ const pieceHandler = (
 
   if (pieces.isDone()) {
     console.log("\n========DOWNLOAD COMPLETE!============\n");
+    socket.on('end', () => {
+      console.log("TCP connection socket ended")
+    })
+
     socket.end()
 
-    socket.on('end', () => {
-      console.log("TCP connection socket closed")
-    })
 
     try {
       fs.closeSync(file.descriptor);

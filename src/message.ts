@@ -1,14 +1,15 @@
 import { Buffer } from "buffer";
 import * as torrentParser from "./torrent-parser";
 import * as util from "./util";
-import { IBuildRequestPayload, IParsePayload } from "./types";
+import { IBuildRequestPayload, IParsePayload, TorrentInfo } from "./types";
 
 /*
 for reference : https://wiki.theory.org/BitTorrentSpecification 
 
 The handshake is the initial step in establishing a connection between two peers in a BitTorrent network.
 
-It serves to confirm the identity of the peers and to ensure they are part of the same torrent swarm.
+info hashing It serves to confirm the identity of the peers and to ensure they are part of the same torrent swarm
+i.e when torrent.info is hashed creates a unique hash for the torrent file thus act as identifier.
 
 handshake is 68 bytes long
 handshake: <pstrlen><pstr><reserved><info_hash><peer_id>
@@ -21,7 +22,7 @@ Info Hash: \x12\x34\x56... (20-byte SHA-1 hash)
 Peer ID: -AZ2060-283292789234 (example 20-byte identifier)
 
 */
-export const buildHandshake = (torrent: unknown) => {
+export const buildHandshake = (torrent: TorrentInfo) => {
   //68 bytes
   const buf = Buffer.alloc(68);
   //pstrlen
