@@ -15,7 +15,7 @@ npm i
 ```
 
 ```
- tsx src/index.ts torrents/<path-to-your-torrent-file>
+ tsx src/index.ts <path-to-your-torrent-file>
 ````
 
 for now default is "torrents/electronics.torrent".Other file might not work as they do not valid tracker url or have not handle other cases.
