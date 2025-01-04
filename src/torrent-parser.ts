@@ -2,7 +2,6 @@ import fs from "fs";
 import bencode from "bencode";
 import * as crypto from "crypto";
 import { TorrentInfo } from "./types";
-import { toBufferBE, toBigIntBE } from "bigint-buffer";
 
 export const open = (filePath: string) => {
   console.log("=== opening torrent file ===");
@@ -18,13 +17,15 @@ export const infoHash = (torrent: any) => {
 };
 
 export const size = (torrent: any): Buffer => {
+  const buf = Buffer.alloc(8);
   const size = torrent.info.files
     ? torrent.info.files
       .map((file: any) => file.length)
       .reduce((acc: number, curr: number) => acc + curr, 0)
     : torrent.info.length;
 
-  return toBufferBE(BigInt(size), 8);
+  buf.writeBigInt64BE(BigInt(size), 0);
+  return buf
 };
 
 /*
@@ -37,7 +38,7 @@ export const BLOCK_LEN = 2 ** 14;
  */
 export const pieceLen = (torrent: any, pieceIndex: number) => {
 
-  const totalLength = Number(toBigIntBE(size(torrent)));
+  const totalLength = Number(size(torrent).readBigInt64BE());
   const pieceLength = torrent.info["piece length"];
   // console.log({ totalLength, pieceLength });
 

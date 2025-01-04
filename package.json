@@ -1,6 +1,6 @@
 {
   "name": "bit-torrent-client",
-  "version": "18.16.0",
+  "version": "1.0.0",
   "description": "Writing bit torrent client",
   "main": "index.js",
   "type": "module",
@@ -29,7 +29,6 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "bencode": "^4.0.0",
-    "bigint-buffer": "^1.1.5"
+    "bencode": "^4.0.0"
   }
 }
