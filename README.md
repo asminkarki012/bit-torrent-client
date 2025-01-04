@@ -1,7 +1,6 @@
 # Writing bit torrent client
 
 ## Things I Learned
-
 - Working of bit torrent client  
 - Managing UDP(dgram in node) and TCP(net.Socket in node) connection socket
 - Downloading and assembling files in block
@@ -19,9 +18,6 @@ npm i
 ````
 
 for now default is "torrents/electronics.torrent".Other file might not work as they do not valid tracker url or i have handle other cases.
-
-```
-```
 
 ## Further TODO
 
