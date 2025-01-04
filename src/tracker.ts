@@ -3,6 +3,7 @@ import { Buffer } from "buffer";
 import crypto from "crypto";
 import * as util from "./util";
 import * as torrentParser from "./torrent-parser";
+import { UDPSocket } from "./types";
 
 //udp connection
 export const getPeers = (torrent: any, callback: any) => {
@@ -39,7 +40,7 @@ export const getPeers = (torrent: any, callback: any) => {
 };
 
 const udpSend = (
-  socket: dgram.Socket,
+  socket: UDPSocket,
   message: Buffer | string,
   rawUrl: string,
   callback = (err: any) => {

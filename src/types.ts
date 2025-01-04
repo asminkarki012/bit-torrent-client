@@ -23,7 +23,8 @@ export type IBuildRequestPayload = {
   pieceIndex?: number;
 };
 
-export type ISocket = net.Socket | dgram.Socket;
+export type TCPSocket = net.Socket;
+export type UDPSocket = dgram.Socket
 
 export type TorrentInfo = {
   "announce": Uint8Array;
@@ -45,4 +46,9 @@ export type FileDescriptor = {
   length: number;
   descriptor: number | null; // Initially null, but will be a number once the file is opened
   offset: number;
+}
+
+export type Peer = {
+  port: number;
+  ip: string;
 }

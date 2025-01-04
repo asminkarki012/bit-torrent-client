@@ -1,14 +1,13 @@
 import * as net from "net";
 import { Buffer } from "buffer";
 import * as fs from "fs";
-import * as path from "path";
 import * as tracker from "./tracker";
 import * as message from "./message";
-import { FileDescriptor, IParsePayload, IQueue, ISocket } from "./types";
+import { FileDescriptor, IParsePayload, IQueue, TCPSocket, TorrentInfo, UDPSocket, Peer } from "./types";
 import Pieces from "./Pieces";
 import Queue from "./Queue";
 
-export default (torrent: any, filePath: Buffer) => {
+export default (torrent: TorrentInfo, filePath: Buffer) => {
   tracker.getPeers(torrent, (peers: any) => {
     console.log(torrent.info.files);
     //gives the total number of pieces
@@ -17,7 +16,6 @@ export default (torrent: any, filePath: Buffer) => {
     fs.mkdir(filePath, (err) => {
       if (err) {
         console.log({ error_while_creating_download_directory: err });
-        return;
       }
     });
     // console.log("pieces", pieces);
@@ -26,11 +24,11 @@ export default (torrent: any, filePath: Buffer) => {
     files.forEach((file: FileDescriptor) => {
       file.descriptor = fs.openSync(file.path, "w");
     });
-    peers.forEach((peer: unknown) => download(peer, torrent, pieces, files));
+    peers.forEach((peer: Peer) => download(peer, torrent, pieces, files));
   });
 };
 
-const intializeFiles = (torrent: any, path: Buffer) => {
+const intializeFiles = (torrent: TorrentInfo, path: Buffer) => {
   const files = [];
   const nFiles = torrent.info.files.length;
   const directorypath = Buffer.from(path).toString();
@@ -58,7 +56,7 @@ const intializeFiles = (torrent: any, path: Buffer) => {
 
 //TCP connection established to download files from peers
 const download = (
-  peer: any,
+  peer: Peer,
   torrent: unknown,
   pieces: Pieces,
   fileDesc: any
@@ -137,16 +135,19 @@ const isHandShake = (msg: Buffer) => {
 
 const chokeHandler = (socket: net.Socket) => {
   socket.end();
+  socket.on('end', () => {
+    console.log("TCP connection socket closed")
+  })
 };
 
-const unchokeHandler = (socket: ISocket, pieces: Pieces, queue: Queue) => {
+const unchokeHandler = (socket: TCPSocket, pieces: Pieces, queue: Queue) => {
   queue.choked = false;
   requestPiece(socket, pieces, queue);
 };
 
 const haveHandler = (
   payload: any,
-  socket: ISocket,
+  socket: TCPSocket,
   requested: Pieces,
   queue: any
 ) => {
@@ -161,7 +162,7 @@ const haveHandler = (
  */
 const bitfieldHandler = (
   payload: any,
-  socket: ISocket,
+  socket: TCPSocket,
   pieces: Pieces,
   queue: Queue
 ) => {
@@ -184,7 +185,7 @@ const bitfieldHandler = (
 
 const pieceHandler = (
   pieceResp: any,
-  socket: any,
+  socket: net.Socket,
   pieces: Pieces,
   queue: any,
   torrent: any,
@@ -211,12 +212,18 @@ const pieceHandler = (
 
   if (pieces.isDone()) {
     console.log("\n========DOWNLOAD COMPLETE!============\n");
-    socket.close();
+    socket.end()
+
+    socket.on('end', () => {
+      console.log("TCP connection socket closed")
+    })
 
     try {
       fs.closeSync(file.descriptor);
       process.exit(0);
-    } catch (e) { }
+    } catch (e) {
+      console.error({ error_while_closing_file_descriptor: e });
+    }
   } else {
     const progress = (pieces.totalReceivedBlocks / pieces.totalBlocks) * 100;
     const formattedProgress = progress.toPrecision(3);
