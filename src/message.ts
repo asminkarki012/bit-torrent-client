@@ -119,7 +119,7 @@ export const buildHave = (payload: any) => {
  * provides pieces info of peers
  */
 export const buildBitfield = (bitfield: any) => {
-  const buf = Buffer.alloc(14);
+  const buf = Buffer.alloc(bitfield.length + 1 + 4);
   // length
   buf.writeUInt32BE(bitfield.length + 1, 0);
   // id
